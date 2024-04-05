@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:universal_io/io.dart';
 
 import 'country.dart';
 import 'country_list_theme_data.dart';
@@ -60,7 +62,8 @@ class CountryListView extends StatefulWidget {
     this.showWorldWide = false,
     this.showSearch = true,
     this.customFlagBuilder,
-  })  : assert(
+  })
+      : assert(
   exclude == null || countryFilter == null,
   'Cannot provide both exclude and countryFilter',
   ),
@@ -207,7 +210,9 @@ class _CountryListViewState extends State<CountryListView> {
                     SizedBox(
                       width: 45,
                       child: Text(
-                        '${isRtl ? '' : '+'}${country.phoneCode}${isRtl ? '+' : ''}',
+                        '${isRtl ? '' : '+'}${country.phoneCode}${isRtl
+                            ? '+'
+                            : ''}',
                         style: _textStyle,
                       ),
                     ),
@@ -224,7 +229,7 @@ class _CountryListViewState extends State<CountryListView> {
                       country.name,
                   style: _textStyle,
                 ),
-              ),
+              )
             ],
           ),
         ),
@@ -237,19 +242,38 @@ class _CountryListViewState extends State<CountryListView> {
     return SizedBox(
       // the conditional 50 prevents irregularities caused by the flags in RTL mode
       width: isRtl ? 50 : null,
-      child: _emojiText(country),
+      child: kIsWeb || Platform.isWindows ? _flagImage(country) : _emojiText(
+          country),
     );
   }
 
-  Widget _emojiText(Country country) => Text(
-    country.iswWorldWide
-        ? '\uD83C\uDF0D'
-        : Utils.countryCodeToEmoji(country.countryCode),
-    style: TextStyle(
-      fontSize: widget.countryListTheme?.flagSize ?? 25,
-      fontFamilyFallback: widget.countryListTheme?.emojiFontFamilyFallback,
-    ),
-  );
+  Widget _flagImage(Country country) {
+    if (country.countryCode == 'RU') {
+      return Text('💩');
+    }
+    final String url =
+        "https://www.countryflagicons.com/FLAT/64/${country.countryCode}.png";
+    return Image.network(
+      url,
+      width: widget.countryListTheme?.flagSize ?? 22,
+      errorBuilder: (_, __, ___) => _emojiText(country),
+    );
+  }
+
+  Widget _emojiText(Country country) {
+    if (country.countryCode == 'RU') {
+      return Text('💩',
+          style: TextStyle(fontSize: widget.countryListTheme?.flagSize ?? 20));
+    }
+    return Text(
+      country.iswWorldWide
+          ? '\uD83C\uDF0D'
+          : Utils.countryCodeToEmoji(country.countryCode),
+      style: TextStyle(
+        fontSize: widget.countryListTheme?.flagSize ?? 20,
+      ),
+    );
+  }
 
   void _filterSearchResults(String query) {
     List<Country> _searchResult = <Country>[];
